@@ -1,0 +1,79 @@
+# MATLAB-SIMULATIONS-FOR-PERFORMANCE-ANALYSIS-OF-COGNITIVE-RADIO-NETWORKS
+
+t = 0:0.00001:0.001; 
+% we’ve taken 5 carrier frequencies Fc1 = 1000, Fc2 = 2000, Fc3 = 3000, Fc4=4000 & Fc5 = 5000 % keeping the user message/data signal frequency as 1000.  
+Fc1 = 1000;  
+Fc2 = 2000;  
+Fc3 = 3000;  
+Fc4 = 4000;  
+Fc5 = 5000;  Fs = 12000; 
+y1 = 1; y2 = 0; y3 = 0; y4 = 0; y5 = 0; Y = 0; y = 0; 
+	x1 = cos(2*pi*1000*t); 	 	 	 	 	% every user’s base band data signal 
+ 
+% once user 1’s data arrive, it is modulated at the first carrier Fc1, similarly as the 2nd user’s  
+% data arrives; it is modulated at the 2nd carrier Fc2, so on till fifth user is assigned the Fc5  % band. If any user’s data isn’t present his frequency band remains empty which is called a  % Spectral Hole. 
+ 
+in_p = input('\nDo you want to enter first primary user Y/N: ','s'); if(in_p == 'Y' || in_p == 'y') y1 = ammod(x1,Fc1,Fs); end 
+in_p = input('Do you want to enter second primary user Y/N: ','s'); if(in_p == 'Y' || in_p == 'y') y2 = ammod(x1,Fc2,Fs); end 
+in_p = input('Do you want to enter third primary user Y/N: ','s'); if(in_p == 'Y' ||in_p == 'y') y3 = ammod(x1,Fc3,Fs); end 
+in_p = input('Do you want to enter fourth primary user Y/N: ','s'); if(in_p == 'Y' || in_p == 'y') y4 = ammod(x1,Fc4,Fs); end 
+in_p = input('Do you want to enter fifth primary user Y/N: ','s'); if(in_p == 'Y' || in_p == 'y') y5 = ammod(x1,Fc5,Fs); end 
+ 
+% once all the assignment is complete we add all the signals to create a carrier signal  % which will be analyzed for empty slots as the channel. y = y1 + y2 + y3 + y4 + y5; 
+while(1) 
+% Now we’ll estimate the power spectral density of our carrier signal using the periodogram(); % function and the values are stored in an array Pxx. Pxx is the distribution of power per unit  % frequency. This value is then stored in a dsp data object and then plotted.  
+Pxx = periodogram(y); 
+Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); 
+% Hs = DSPDATA.<DATAOBJECT>(...) returns a DSP data object,  
+% Hs, of type specified by DATAOBJECT. Some common data objects are 
+% msspectrum        - Mean-square Spectrum (MSS) data object 
+% psd                        - Power Spectral Density (PSD) data object 
+% pseudospectrum - Pseudo Spectrum data object 
+in_p = input('\nDo you want to enter another primary user Y/N: ','s'); if(in_p == 'Y' || in_p == 'y') tp=0; 
+% we’ve obtained five points for all users in the array Pxx which multiplied by 10000 should be % above 8000 if there’s no spectral hole. //this just an observation which is working so far, the % technical aspects will be addressed later in the presentation. chek1 = Pxx(25)*10000; chek2 = Pxx(46)*10000; chek3 = Pxx(62)*10000; chek4 = Pxx(89)*10000; chek5 = Pxx(105)*10000; 
+% now if there is a new user entering the channel, we’ll check the array Pxx, at certain location 
+% and assign user the first spectral gap as coded below if(chek1 < 8000) 
+disp('Assigned to User 1 as it was not present.'); 
+y1 = ammod(x1,Fc1,Fs); elseif (chek2 < 8000) 
+disp('Assigned to User 2 as it was not present.'); 
+y2 = ammod(x1,Fc2,Fs); elseif(chek3 < 8000) 
+disp('Assigned to User 3 as it was not present.'); 
+y3 = ammod(x1,Fc3,Fs); elseif(chek4 < 8000) 
+disp('Assigned to User 4 as it was not present.'); 
+y4 = ammod(x1,Fc4,Fs); elseif(chek5 < 8000) 
+disp('Assigned to User 5 as it was not present.'); 
+y5 = ammod(x1,Fc5,Fs); 
+else 
+disp('all user slots in use. try again later,'); tp=1; end 
+figure y = y1 + y2 + y3 + y4 + y5 ; 
+Pxx = periodogram(y); Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); if(tp==1) 
+% then we’ve the slot emptying algorithm which will empty the already occupied bands by  % asking user to choose a slot and executing the following code. inp_t=input('Do you want to empty a slot: ','s'); if(inp_t=='Y'||inp_t=='y') 
+inp_t=input('Which slot do you want to empty for your entry: ','s'); switch(inp_t) 
+case ('1') 
+y1=0; 
+disp('slot1 is fired'); y = y1 + y2 + y3 + y4 + y5; 
+Pxx = periodogram(y); Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); case('2') 
+y2=0; 
+disp('slot2 is fired'); y = y1 + y2 + y3 + y4 + y5; 
+Pxx = periodogram(y); Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); case('3') 
+y3=0; disp('slot3 is fired'); 
+% then we repeat the above plotting procedure that was done after the assignments. 
+% To add noise to our signal I’ve used the simpler awgn(); function. y = y1 + y2 + y3 + y4 + y5; 
+Pxx = periodogram(y); Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); case('4') 
+y4=0; 
+disp('slot4 is fired'); y = y1 + y2 + y3 + y4 + y5; 
+Pxx = periodogram(y); Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); case('5') y5=0; 
+disp('slot5 is fired'); y = y1 + y2 + y3 + y4 + y5; 
+Pxx = periodogram(y); 
+Hpsd = dspdata.psd(Pxx,'Fs',Fs); plot(Hpsd); 
+otherwise disp('Invalid slot entered'); end  end end 
+inp_t=input('Do you want to add noise: ','s'); if(inp_t=='y'||inp_t=='Y') d = input('Enter the SNR in dB: '); figure Y = awgn(y,d); 
+Pxx1 = periodogram(Y); 
+Hpsd = dspdata.psd(Pxx1,'Fs',Fs); plot(Hpsd); end 
+% to attenuate our signal the system asks for the percentage of attenuation required followed % by the plot of the attenuated carrier signal. The percentage divided by hundred is subtracted % from 1 and the remaining number is multiplied with the signal. temp = input('Do you want to attenuate the signals? [Y/N]: ','s'); if(temp == 'Y' || temp == 'y') 
+aF = input('Enter the percentage to attenuate the signal: '); figure tem = aF/100; tm = 1-tem; Z = y.*tm; disp('attenuating'); 
+grid; 
+plot(Z); 
+Pxx4 = periodogram(Z); 
+Hpsd = dspdata.psd(Pxx4,'Fs',Fs); plot(Hpsd); end end 
+temp = input('Do you want to re-run the program? [Y/N]: ','s'); if(temp == 'Y' || temp == 'y') disp('\n\nEnter the users again.\n\n'); else break; end end 
